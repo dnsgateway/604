@@ -1,184 +1,167 @@
-/****************************************************
-  script.js – AI strategy from form + chart patterns
-*****************************************************/
+/******************************************************
+  script.js — now fetches OHLC from TradingView first
+******************************************************/
 
-/* ========== 1. Feather icons & router ========== */
+/* ───────────── 1  ICONS & NAV ───────────── */
 feather.replace();
 const pages   = document.querySelectorAll('.page');
 const navBtns = document.querySelectorAll('[data-page]');
 const sidebar = document.getElementById('sidebar');
-
-function show(id){
-  pages.forEach(p=>p.classList.toggle('active',p.id===id));
+function show(id){pages.forEach(p=>p.classList.toggle('active',p.id===id));
   navBtns.forEach(b=>b.classList.toggle('active',b.dataset.page===id));
-  if (innerWidth < 768) sidebar.classList.remove('open');
-}
-navBtns.forEach(b=>b.addEventListener('click',()=>show(b.dataset.page)));
-show('rates');
-hamburger.onclick = () => sidebar.classList.toggle('open');
+  if(innerWidth<768) sidebar.classList.remove('open');}
+navBtns.forEach(b=>b.onclick=()=>show(b.dataset.page));
+show('rates'); hamburger.onclick=()=>sidebar.classList.toggle('open');
 
-/* ========== 2. Theme toggles ========== */
-matrixToggle.onchange = e => document.body.classList.toggle('matrix', e.target.checked);
-blurToggle  .onchange = e => document.body.classList.toggle('blurred', e.target.checked);
+/* ───────────── 2  THEME TOGGLES ─────────── */
+matrixToggle.onchange=e=>document.body.classList.toggle('matrix',e.target.checked);
+blurToggle  .onchange=e=>document.body.classList.toggle('blurred',e.target.checked);
 
-/* ========== 3. Global stores ========== */
-const latest  = {};      // { EUR: 1.0843, ... }
-const barsDB  = {};      // { 'EUR/USD': [ {time,o,h,l,c}, ... ] }
-const metrics = {};      // { 'EUR/USD': { price,sma,rsi,atr } }
+/* ───────────── 3  DATA STORES ───────────── */
+const latest  = {};   // snapshot quotes
+const barsDB  = {};   // daily OHLC per pair
+const metrics = {};   // price, sma, rsi, atr
 
-/* ========== 4. Snapshot quotes  ========== */
-(async function initSnapshot(){
-  const snap = await fetch('https://api.exchangerate.host/latest?base=USD').then(r=>r.json());
-  Object.assign(latest, snap.rates);
-  updateCard('EURUSD','EUR',true);
-  updateCard('USDJPY','JPY',false);
-  updateCard('GBPUSD','GBP',true);
-
-  /* async—fetch last 60 daily bars */
-  await Promise.all([
-    fetchSeries('EUR/USD','EUR',true),
-    fetchSeries('USD/JPY','JPY',false),
-    fetchSeries('GBP/USD','GBP',true)
-  ]);
-  calcIndicators();
+/* ───────────── 4  LOAD ALL PAIRS ────────── */
+const PAIRS = [
+  {key:'EUR/USD', tv:'FX:EURUSD', quote:'EUR', inv:true },
+  {key:'USD/JPY', tv:'FX:USDJPY', quote:'JPY', inv:false},
+  {key:'GBP/USD', tv:'FX:GBPUSD', quote:'GBP', inv:true }
+];
+(async function init(){
+  await Promise.all(PAIRS.map(loadPair));
+  calcIndicators();             // after OHLC arrives
+  updateUICards();              // price/SMA/RSI text
+  updatePL();                   // portfolio refresh
+  setInterval(refreshSnapshot,60000);  // repeat quote every minute
 })();
-function updateCard(code, quote, invert){
-  const price = invert ? 1/latest[quote] : latest[quote];
-  document.querySelector(`[data-pair="${code}"] .price`).textContent = price.toFixed(4);
-  metrics[fmt(code)] = { price };      // store base price
-}
-function fmt(code){return code.replace(/([A-Z]{3})([A-Z]{3})/,'$1/$2');}
 
-/* ========== 5. Load OHLC series ========== */
-async function fetchSeries(pair, quote, invert){
-  const end = new Date(), start = new Date(end.getTime() - 60*864e5);
-  const url = `https://api.exchangerate.host/timeseries?start_date=${date(start)}&end_date=${date(end)}&base=USD&symbols=${quote}`;
-  const js  = await fetch(url).then(r=>r.json());
-  const rows = [];
-  for (const [d,v] of Object.entries(js.rates)){
-    const p = invert ? 1/v[quote] : v[quote];
-    rows.push({ time:d, open:p, high:p, low:p, close:p });
+/* ───────────── 5  TRADINGVIEW FETCH ─────── */
+async function loadPair(p){
+  const to   = Math.floor(Date.now()/1000);
+  const from = to - 60*86400;              // 60 days
+  const url  = tvUrl(p.tv,from,to);
+  try{
+    const tv = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`).then(r=>r.json());
+    if(tv.s!=='ok' || !tv.c.length){ throw 'tv empty'; }
+    barsDB[p.key] = tv.t.map((t,i)=>({
+      time  : new Date(tv.t[i]*1000).toISOString().slice(0,10),
+      open  : tv.o[i],
+      high  : tv.h[i],
+      low   : tv.l[i],
+      close : tv.c[i]
+    }));
+    latest[p.quote] = p.inv ? 1/tv.c.at(-1) : tv.c.at(-1);   // store latest quote
+    return;
+  }catch(e){
+    console.warn(`TV feed fail for ${p.key}`,e);
+    await fallbackPair(p);      // exchangerate-host fallback
   }
-  barsDB[pair] = rows.sort((a,b)=>new Date(a.time)-new Date(b.time));
 }
-function date(d){return d.toISOString().slice(0,10);}
+function tvUrl(symbol,from,to){
+  /* TradingView public history endpoint (no key) */
+  return `https://tvd.tradingview.com/history?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${from}&to=${to}`;
+}
 
-/* ========== 6. Compute SMA-20, RSI-14, ATR-14 ========== */
+/* ───────────── 6  FALLBACK SNAPSHOT/OHLC ── */
+async function fallbackPair(p){
+  const end=new Date(),start=new Date(end.getTime()-60*864e5);
+  const url=`https://api.exchangerate.host/timeseries?start_date=${d(start)}&end_date=${d(end)}&base=USD&symbols=${p.quote}`;
+  const js=await fetch(url).then(r=>r.json());
+  barsDB[p.key]=Object.entries(js.rates).map(([d,v])=>{
+    const px=p.inv?1/v[p.quote]:v[p.quote];
+    return{time:d,open:px,high:px,low:px,close:px};
+  });
+  latest[p.quote]=p.inv?1/js.rates[d(end)][p.quote]:js.rates[d(end)][p.quote];
+}
+function d(x){return x.toISOString().slice(0,10);}
+
+/* ───────────── 7  INDICATORS ────────────── */
 function calcIndicators(){
   Object.entries(barsDB).forEach(([pair,b])=>{
     if(b.length<21) return;
-    const closes = b.map(x=>x.close);
-    /* SMA */
-    const sma = closes.slice(-20).reduce((a,c)=>a+c,0)/20;
-    /* RSI */
+    const closes=b.map(x=>x.close);
+    const sma=closes.slice(-20).reduce((a,c)=>a+c,0)/20;
+    // RSI
     let up=0,dn=0;
     for(let i=closes.length-15;i<closes.length-1;i++){
-      const diff = closes[i+1]-closes[i];
-      diff>0 ? up+=diff : dn-=diff;
+      const d=closes[i+1]-closes[i]; d>0?up+=d:dn-=d;
     }
-    const rsi = 100 - 100/(1+(up/(dn||0.0001)));
-    /* ATR */
-    const trs = [];
-    for(let i=closes.length-15;i<closes.length;i++){
-      const bar = b[i];
-      trs.push(bar.high - bar.low);              // true range (simplified)
+    const rsi=100-100/(1+up/(dn||.0001));
+    // ATR
+    const tr=[];
+    for(let i=b.length-15;i<b.length;i++){
+      tr.push(b[i].high-b[i].low);
     }
-    const atr = trs.reduce((a,c)=>a+c,0)/trs.length;
-    metrics[pair] = {...metrics[pair], sma, rsi, atr };
-    /* push to cards */
-    const code = pair.replace('/','');
-    const card = document.querySelector(`[data-pair="${code}"]`);
+    const atr=tr.reduce((a,c)=>a+c,0)/tr.length;
+    metrics[pair]={ price:closes.at(-1), sma, rsi, atr };
+  });
+}
+function updateUICards(){
+  PAIRS.forEach(p=>{
+    const m=metrics[p.key]; if(!m) return;
+    const code=p.key.replace('/','');
+    const card=document.querySelector(`[data-pair="${code}"]`);
     if(card){
-      card.querySelector('.sma span').textContent = sma.toFixed(4);
-      card.querySelector('.rsi span').textContent = rsi.toFixed(1);
+      card.querySelector('.price').textContent = m.price.toFixed(4);
+      card.querySelector('.sma span').textContent = m.sma.toFixed(4);
+      card.querySelector('.rsi span').textContent = m.rsi.toFixed(1);
     }
   });
 }
 
-/* ========== 7. Pattern detector (last 2 bars) ========== */
-function detectPattern(bars){
-  if(!bars || bars.length<2) return null;
-  const [prev,last] = bars.slice(-2);
-  // Bullish engulf
-  if(prev.close<prev.open && last.close>last.open &&
-     last.close>prev.open && last.open<prev.close) return 'bull';
-  // Bearish engulf
-  if(prev.close>prev.open && last.close<last.open &&
-     last.open>prev.close && last.close<prev.open) return 'bear';
-  // Inside bar
-  if(last.high<prev.high && last.low>prev.low)    return 'inside';
+/* ───────────── 8  LIVE SNAPSHOT (1-min) ─── */
+async function refreshSnapshot(){
+  const snap=await fetch('https://api.exchangerate.host/latest?base=USD').then(r=>r.json());
+  Object.assign(latest,snap.rates);
+  updateUICards(); updatePL();
+}
+
+/* ───────────── 9  PATTERN & AI STRATEGY ─── */
+function detectPattern(b){
+  if(!b||b.length<2)return null;
+  const [prev,last]=b.slice(-2);
+  if(prev.close<prev.open&&last.close>last.open&&last.close>prev.open&&last.open<prev.close) return'BULL';
+  if(prev.close>prev.open&&last.close<last.open&&last.open>prev.close&&last.close<prev.open) return'BEAR';
+  if(last.high<prev.high&&last.low>prev.low) return'INSIDE';
   return null;
 }
-
-/* ========== 8. AI Strategy Builder ========== */
-function buildStrategy(pair, dir, entry){
-  const m   = metrics[pair] || {};
-  const pat = detectPattern(barsDB[pair]);
-  if(!m.price || !m.atr) return {note:'Data not loaded yet.'};
-
-  const atr  = m.atr;
-  const stop = dir==='Buy' ? entry - atr : entry + atr;
-  const tgt  = dir==='Buy' ? entry + 2*atr : entry - 2*atr;
-
-  let note = '';
-  if(pat==='bull') note = '📈 Bullish-engulfing spotted.';
-  else if(pat==='bear') note = '📉 Bearish-engulfing spotted.';
-  else if(pat==='inside') note = '📊 Inside-bar (await breakout).';
-
-  // Direction conflicts?
-  if((pat==='bull' && dir==='Sell') || (pat==='bear' && dir==='Buy')){
-     note += ' ⚠️ Direction conflicts with pattern.';
-  }
-  return {stop,tgt,note};
+function buildAI(pair,dir,entry){
+  const m=metrics[pair]||{}, bars=barsDB[pair];
+  if(!m.atr){return {note:'AI waiting for data…'};}
+  const atr=m.atr, stop=dir==='Buy'?entry-atr:entry+atr, tgt=dir==='Buy'?entry+2*atr:entry-2*atr;
+  const pat=detectPattern(bars);
+  let note='';
+  if(pat==='BULL')  note='📈 Bullish-engulfing — long bias';
+  if(pat==='BEAR')  note='📉 Bearish-engulfing — short bias';
+  if(pat==='INSIDE')note='📊 Inside-bar, watch breakout';
+  if((pat==='BULL'&&dir==='Sell')||(pat==='BEAR'&&dir==='Buy')) note+=' ⚠️ dir vs pattern!';
+  return{stop,tgt,note};
 }
 
-/* ========== 9. Portfolio Simulator ========== */
-const positions=[];
-portForm.onsubmit = e =>{
+/* ───────────── 10 PORTFOLIO SIM ─────────── */
+const pos=[]; portForm.onsubmit=e=>{
   e.preventDefault();
-  const pair  = pPair.value;
-  const dir   = pDir.value;
-  const units = +pUnits.value;
-  const entry = +pEntry.value;
-  let stop,tgt,note='';
-  if(aiPortToggle.checked){
-    ({stop,tgt,note} = buildStrategy(pair,dir,entry));
-  }
-  positions.push({pair,dir,units,entry,stop,tgt,note});
-  renderPortfolio(); pUnits.value=''; pEntry.value='';
+  const pair=pPair.value, dir=pDir.value, units=+pUnits.value, entry=+pEntry.value;
+  const ai=aiPortToggle.checked?buildAI(pair,dir,entry):{};
+  pos.push({pair,dir,units,entry,...ai}); render(); pUnits.value='';pEntry.value='';
 };
-
-function renderPortfolio(){
+function mark(p){return p==='EUR/USD'?1/latest.EUR : p==='USD/JPY'?latest.JPY : 1/latest.GBP;}
+function render(){
   portGrid.innerHTML='';
-  positions.forEach(p=>{
-    const mark = markPrice(p.pair);
-    const pl   = ((p.dir==='Buy'?mark-p.entry:p.entry-mark)*p.units).toFixed(2);
+  pos.forEach(p=>{
+    const mp=mark(p.pair),
+          pl=((p.dir==='Buy'?mp-p.entry:p.entry-mp)*p.units).toFixed(2);
     portGrid.insertAdjacentHTML('beforeend',`
       <div class="port-card">
         <h4>${p.pair}</h4>
         <div>Entry  <span>${p.entry.toFixed(4)}</span></div>
-        <div>Mark   <span>${mark.toFixed(4)}</span></div>
-        ${p.stop!==undefined ? `<div>Stop   <span>${p.stop.toFixed(4)}</span></div>` : ''}
-        ${p.tgt !==undefined ? `<div>Target <span>${p.tgt.toFixed(4)}</span></div>` : ''}
+        <div>Mark   <span>${mp.toFixed(4)}</span></div>
+        ${p.stop?`<div>Stop   <span>${p.stop.toFixed(4)}</span></div>`:''}
+        ${p.tgt ?`<div>Target <span>${p.tgt.toFixed(4)}</span></div>`:''}
         <div>Units  <span>${p.units.toLocaleString()}</span></div>
-        <div class="pl">P/L   <span style="color:${pl>=0?'lime':'salmon'}">${pl}</span></div>
-        ${p.note ? `<div class="ai">${p.note}</div>` : ''}
-      </div>`);
-  });
+        <div class="pl"><b>P/L</b> <span style="color:${pl>=0?'lime':'salmon'}">${pl}</span></div>
+        ${p.note?`<div class="ai">${p.note}</div>`:''}
+      </div>`);});
 }
-function markPrice(pair){
-  if(pair==='EUR/USD') return 1/latest.EUR;
-  if(pair==='USD/JPY') return latest.JPY;
-  if(pair==='GBP/USD') return 1/latest.GBP;
-  return 0;
-}
-
-/* refresh every 60 s */
-setInterval(async()=>{
-  const snap = await fetch('https://api.exchangerate.host/latest?base=USD').then(r=>r.json());
-  Object.assign(latest,snap.rates);
-  updateCard('EURUSD','EUR',true);
-  updateCard('USDJPY','JPY',false);
-  updateCard('GBPUSD','GBP',true);
-  renderPortfolio();
-},60000);
+function updatePL(){if(pos.length)render();}
