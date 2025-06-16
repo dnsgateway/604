@@ -6,9 +6,9 @@
   <title>Forex Trade Explorer</title>
 
   <!-- Feather + Lightweight-Charts -->
-<!--   <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
   <script src="https://unpkg.com/lightweight-charts@4/dist/lightweight-charts.standalone.production.js"></script>
- -->
+
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -192,21 +192,21 @@ function setCards(){
 })();
 
 /* ------------ lightweight daily chart (EUR/USD) ------------ */
-// const chartBox=document.getElementById('macroChart');
-// const chart=LightweightCharts.createChart(chartBox,{layout:{background:{color:'transparent'},textColor:'var(--txt)'},
-//     grid:{vertLines:{color:'rgba(255,255,255,.06)'},horzLines:{color:'rgba(255,255,255,.06)'}},timeScale:{timeVisible:true}});
-// const series=chart.addCandlestickSeries({upColor:'var(--up)',downColor:'var(--down)',
-//   wickUpColor:'var(--up)',wickDownColor:'var(--down)',borderVisible:false});
-// window.addEventListener('resize',()=>chart.applyOptions({width:chartBox.clientWidth}));
-// fetchDaily();
-// async function fetchDaily(){
-//   const end=new Date(),start=new Date(end.getTime()-380*864e5);
-//   const url=`https://api.exchangerate.host/timeseries?start_date=${d(start)}&end_date=${d(end)}&base=USD&symbols=EUR`;
-//   const js=await fetch(url).then(r=>r.json());
-//   const data=Object.entries(js.rates).map(([day,v])=>{const p=1/v.EUR;return{time:day,open:p,high:p,low:p,close:p};});
-//   series.setData(data);chart.applyOptions({width:chartBox.clientWidth,height:420});
-// }
-// function d(dt){return dt.toISOString().slice(0,10);}
+const chartBox=document.getElementById('macroChart');
+const chart=LightweightCharts.createChart(chartBox,{layout:{background:{color:'transparent'},textColor:'var(--txt)'},
+    grid:{vertLines:{color:'rgba(255,255,255,.06)'},horzLines:{color:'rgba(255,255,255,.06)'}},timeScale:{timeVisible:true}});
+const series=chart.addCandlestickSeries({upColor:'var(--up)',downColor:'var(--down)',
+  wickUpColor:'var(--up)',wickDownColor:'var(--down)',borderVisible:false});
+window.addEventListener('resize',()=>chart.applyOptions({width:chartBox.clientWidth}));
+fetchDaily();
+async function fetchDaily(){
+  const end=new Date(),start=new Date(end.getTime()-380*864e5);
+  const url=`https://api.exchangerate.host/timeseries?start_date=${d(start)}&end_date=${d(end)}&base=USD&symbols=EUR`;
+  const js=await fetch(url).then(r=>r.json());
+  const data=Object.entries(js.rates).map(([day,v])=>{const p=1/v.EUR;return{time:day,open:p,high:p,low:p,close:p};});
+  series.setData(data);chart.applyOptions({width:chartBox.clientWidth,height:420});
+}
+function d(dt){return dt.toISOString().slice(0,10);}
 
 /* ------------ portfolio simulator ------------ */
 const port=[];           // open positions
