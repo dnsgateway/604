@@ -166,10 +166,12 @@ body.blurred::after{
 /* Chart container */
 .chart-box{
   width:100%;height:420px;
+  min-height:420px;      /* ⬅️ ensures proper space */
   border:1px solid var(--border);
   border-radius:12px;
   background:#0d2235
 }
+
 
 /* ──────────────── PORTFOLIO SIMULATOR ──────────────── */
 .port-header{
