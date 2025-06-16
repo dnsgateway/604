@@ -1,263 +1,234 @@
 
-/* ——  MATRIX theme (green “code rain” palette) ————— */
+/************************************
+  Forex Simulator – COMPLETE STYLES
+  (2025-06 update)
+************************************/
+
+/* ───────────────── PALETTE ───────────────── */
+:root{
+  --bg:#001323;           /* main background */
+  --panel:#071b2d;        /* cards / sidebar */
+  --border:#132942;
+  --accent:#00d1ff;       /* neon-blue accent */
+  --txt:#e8f1ff;          /* primary text */
+  --sub:#6bbde0;          /* secondary text */
+  --up:#20e0a0;           /* green up color */
+  --down:#ff4f7e;         /* red down color */
+}
+/* “Matrix” override */
 body.matrix{
-  --bg:#000;               /* almost-black */
-  --panel:#010a02;         /* deep green-black */
-  --border:#103b13;
-  --accent:#23ff23;        /* neon green */
+  --bg:#000;
+  --panel:#010a02;
+  --border:#0f3f12;
+  --accent:#23ff23;
   --txt:#23ff23;
   --sub:#46c146;
   --up:#7dff7d;
-  --down:#ff4f7e;          /* leave red for losses */
+  /* keep red for losses */
 }
-
-/* give panel a subtle matrix-style gradient */
+/* Matrix gradient surface */
 body.matrix .card,
 body.matrix .sidebar,
 body.matrix .bottom-bar,
-body.matrix .macro table,
-body.matrix .trade-sim,
+body.matrix .macro-table,
+body.matrix .chart-box,
+body.matrix .port-card,
 body.matrix .profile-block{
   background:linear-gradient(145deg,#010a02 0%,#001503 100%);
 }
 
-/* ——  Blur toggle ——————————— */
+/* ───────────────── GLOBAL RESET ───────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--txt);
+  line-height:1.4;
+}
+
+/* ───────────────── BLUR MODE ───────────────── */
 body.blurred .sidebar,
 body.blurred .main,
 body.blurred .bottom-bar{
   filter:blur(6px);
-  pointer-events:none;                /* prevent clicks while blurred */
+  pointer-events:none;
   user-select:none;
 }
-
-/* optional darker backdrop while blurred */
 body.blurred::after{
   content:'';
   position:fixed;inset:0;
   background:rgba(0,0,0,.35);
   backdrop-filter:blur(2px);
-  z-index:3000;                       /* above everything */
+  z-index:3000;
 }
 
-/* ─── palette ─────────────────────────────────────────── */
-:root{
-  --bg:#001323;          --panel:#071b2d;   --border:#132942;
-  --accent:#00d1ff;      --txt:#e8f1ff;     --sub:#6bbde0;
-  --up:#20e0a0;          --down:#ff4f7e;
+/* ───────────────── LAYOUT GRID ───────────────── */
+.layout{
+  display:grid;
+  grid-template-columns:260px 1fr;
+  min-height:100vh;
+}
+@media(max-width:1023px){.layout{grid-template-columns:220px 1fr}}
+@media(max-width:767px){
+  .layout{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
 }
 
-/* ─── reset ───────────────────────────────────────────── */
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-     background:var(--bg);color:var(--txt);line-height:1.4;}
-
-/* ─── grid shell ─────────────────────────────────────── */
-.layout{display:grid;grid-template-columns:260px 1fr;
-        min-height:100vh;}
-@media(max-width:1023px){.layout{grid-template-columns:220px 1fr;}}
-@media(max-width:767px){  /* mobile */
-  .layout{grid-template-columns:1fr;grid-template-rows:auto 1fr auto;}
-}
-
-/* ─── sidebar ─────────────────────────────────────────── */
+/* ──────────────── SIDEBAR ──────────────── */
 .sidebar{
-  background:var(--panel);border-right:1px solid var(--border);
-  padding:1.5rem 1rem;display:flex;flex-direction:column;gap:2rem;
-  position:relative;z-index:2000;
+  background:var(--panel);
+  border-right:1px solid var(--border);
+  padding:1.4rem 1rem;
+  display:flex;
+  flex-direction:column;
+  gap:2rem;
+  position:relative;
+  z-index:2000;
 }
-.hamburger{display:none;background:transparent;border:none;
-           color:var(--accent);cursor:pointer;}
-.profile-block{text-align:center}
-.avatar{width:64px;height:64px;border-radius:50%;
-        background:#102235;display:grid;place-items:center;
-        margin:0 auto 1rem;}
-.avatar i{stroke:var(--accent);}
-.name{font-size:1rem;font-weight:600}
-.email{font-size:.75rem;color:var(--sub);}
-.side-nav{display:flex;flex-direction:column;gap:.6rem;}
-.side-nav button{
-  background:none;border:none;color:var(--txt);display:flex;
-  align-items:center;gap:.8rem;font-size:1rem;padding:.6rem .4rem;
-  border-radius:8px;cursor:pointer;}
-.side-nav i{stroke:var(--accent);}
-.side-nav button:hover{background:rgba(255,255,255,.05);}
-
-/* mobile sidebar toggle */
+.hamburger{
+  display:none;
+  background:none;border:none;
+  color:var(--accent);cursor:pointer;
+}
 @media(max-width:767px){
-  .hamburger{display:block;margin-bottom:1rem;}
+  .hamburger{display:block;margin-bottom:1rem}
   .sidebar{
-    position:fixed;inset:0 40% 0 0;max-width:280px;
-    transform:translateX(-100%);transition:.3s;
-    padding-top:3.5rem;}
-  .sidebar.open{transform:translateX(0);}
+    position:fixed;inset:0 45% 0 0;max-width:280px;
+    transform:translateX(-100%);
+    transition:.3s; padding-top:3.5rem;
+  }
+  .sidebar.open{transform:translateX(0)}
 }
+.profile-block{text-align:center}
+.avatar{
+  width:64px;height:64px;
+  background:#102235;border-radius:50%;
+  display:grid;place-items:center;
+  margin:0 auto 1rem;
+}
+.avatar i{stroke:var(--accent)}
+.email{font-size:.75rem;color:var(--sub)}
+.side-nav{display:flex;flex-direction:column;gap:.6rem}
+.side-nav button{
+  width:100%;display:flex;align-items:center;gap:.7rem;
+  background:none;border:none;padding:.6rem .4rem;
+  color:var(--txt);font-size:1rem;border-radius:8px;cursor:pointer;
+}
+.side-nav i{stroke:var(--accent)}
+.side-nav button:hover,
+.side-nav button.active{background:rgba(255,255,255,.07)}
 
-/* ─── main panel ─────────────────────────────────────── */
-.main{padding:2rem 2.5rem;overflow-y:auto;}
-.hero h1{font-size:2.3rem;margin-bottom:.4rem;font-weight:700;}
-.hero p {color:var(--sub);margin-bottom:2rem;}
-.m-break{display:none;}
+/* ──────────────── MAIN PANEL ──────────────── */
+.main{padding:2rem 2.5rem;overflow-y:auto}
+@media(max-width:767px){.main{padding:1.2rem 1rem}}
+.hero h1{font-size:2.3rem;margin-bottom:.35rem;font-weight:700}
+.hero p {color:var(--sub);margin-bottom:1.9rem}
 
-@media(max-width:767px){
-  .main{padding:1.2rem 1rem;}
-  .hero h1{font-size:1.9rem;}
-  .m-break{display:inline;}
-}
-
-/* ─ rate cards ─ */
-.rates-grid{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:1.2rem;margin-bottom:2.4rem;}
-.card{
-  background:var(--panel);border:1px solid var(--border);
-  padding:1rem 1.2rem;border-radius:12px;}
-.card.wide{grid-column:span 2;}
-.card h3{margin-bottom:.3rem;font-size:1rem;font-weight:600;}
-.rate{font-size:.9rem;}
-.red .rate{color:var(--down);}   .green .rate{color:var(--up);}
-
-/* ─ macro table ─ */
-.macro h2{font-size:1.3rem;margin-bottom:.8rem;}
-.macro table{width:100%;font-size:.83rem;border-collapse:collapse;}
-.macro th{color:var(--sub);text-align:left;padding-bottom:6px;}
-.macro td{padding:.6rem 0;border-bottom:1px solid var(--border);}
-.macro .up{color:var(--up);} .macro .down{color:var(--down);}
-.macro tr:last-child td{border-bottom:none;}
-
-.placeholder{margin:3rem 0 1rem;color:var(--sub);}
-.card .sma,
-.card .rsi{
-  font-size:.74rem;
-  color:var(--sub);
-  margin-top:.15rem;
-}
-
-/* ─ bottom bar (mobile) ─ */
-.bottom-bar{
-  display:none;align-items:center;justify-content:space-around;
-  background:var(--panel);border-top:1px solid var(--border);
-  padding:.6rem 0;}
-.bottom-bar button{background:none;border:none;color:var(--accent);
-                   cursor:pointer;}
-.bottom-bar button.active i{stroke:var(--bg);}
-.bottom-bar i{width:24px;height:24px;}
-
-@media(max-width:767px){.bottom-bar{display:flex;}}
-
-.trade-sim{margin-top:2rem;}
-.trade-sim-header{
-  display:flex;justify-content:space-between;align-items:center;
-  margin-bottom:1rem;
-}
-.sim-form{
-  display:grid;gap:1rem;
-  grid-template-columns:1fr 1fr;
-  max-width:600px;
-}
-.sim-form label{display:flex;flex-direction:column;font-size:.85rem;}
-.sim-form input, .sim-form select{
-  padding:0.5rem;border-radius:6px;
-  border:none;background:#0d2235;color:#fff;
-}
-.sim-form button{
-  grid-column:span 2;margin-top:1rem;
-  background:var(--accent);color:#001323;
-  border:none;padding:0.6rem;border-radius:6px;
-  font-weight:600;cursor:pointer;
-}
-.sim-result{
-  margin-top:1rem;font-size:.9rem;color:var(--sub);
-}
-
-/* Toggle Switch */
-.toggle{position:relative;display:inline-flex;align-items:center;gap:.5rem;}
-.toggle input{display:none;}
-.toggle .slider{
-  width:34px;height:18px;background:#888;
-  border-radius:20px;position:relative;
-  transition:.3s;
-}
-.toggle .slider::before{
-  content:'';position:absolute;top:2px;left:2px;
-  width:14px;height:14px;border-radius:50%;
-  background:#fff;transition:.3s;
-}
-.toggle input:checked + .slider{
-  background:var(--accent);
-}
-.toggle input:checked + .slider::before{
-  transform:translateX(16px);
-}
-.label-text{font-size:0.8rem;color:var(--sub);}
-
-/* Mobile stacking */
-@media(max-width:600px){
-  .sim-form{grid-template-columns:1fr;}
-  .sim-form button{grid-column:span 1;}
-}
-
-
-/* page toggling */
+/* ──────────────── PAGE ROUTER ──────────────── */
 .page{display:none}
 .page.active{display:block}
 
-/* side-nav active feedback */
-.side-nav button.active{background:rgba(255,255,255,.07)}
-
-/* indicator lines in cards */
-.card .sma,.card .rsi{
-  font-size:.75rem;
-  color:var(--sub);
-  margin-top:.2rem;
+/* ──────────────── RATE CARDS ──────────────── */
+.rates-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:1.2rem;margin-bottom:2.4rem;
 }
-
-/* Live-chart box */
-.chart-box{
-  width:100%;
-  height:480px;
+.card{
+  background:var(--panel);
   border:1px solid var(--border);
   border-radius:12px;
-  background:#0d2235;
-  margin-top:1rem;
+  padding:1rem 1.2rem;
+}
+.card.wide{grid-column:span 2}
+.card h3{font-size:1rem;margin-bottom:.35rem;font-weight:600}
+.rate{font-size:.9rem}
+.red .rate{color:var(--down)}
+.green .rate{color:var(--up)}
+.card .sma,.card .rsi{
+  font-size:.74rem;color:var(--sub);margin-top:.15rem
 }
 
-/* --- page toggle & active nav --- */
-.page{display:none}.page.active{display:block}
-.side-nav button.active{background:rgba(255,255,255,.07)}
-
-/* --- macro + chart 2-col --- */
-.macro-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem}
-.macro-box{overflow:auto}
-.chart-box{width:100%;height:420px;border:1px solid var(--border);
-           border-radius:12px;background:#0d2235}
+/* ──────────────── MACRO + CHART WRAP ──────────────── */
+.macro-wrap{
+  display:grid;grid-template-columns:1fr 1fr;gap:1.4rem
+}
 @media(max-width:1023px){.macro-wrap{grid-template-columns:1fr}}
+.macro-box{}
+.macro-table{
+  width:100%;font-size:.83rem;border-collapse:collapse
+}
+.macro-table th{color:var(--sub);text-align:left;padding-bottom:6px}
+.macro-table td{padding:.55rem 0;border-bottom:1px solid var(--border)}
+.macro-table .up{color:var(--up)}
+.macro-table .down{color:var(--down)}
+.macro-table tr:last-child td{border-bottom:none}
 
-/* --- portfolio simulator --- */
-.port-header{display:flex;justify-content:space-between;align-items:center}
-.subline{color:var(--sub);margin:.3rem 0 1rem;font-size:.9rem}
-.port-form{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:1.5rem}
-.port-form label{display:flex;flex-direction:column;font-size:.85rem}
+/* Chart container */
+.chart-box{
+  width:100%;height:420px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#0d2235
+}
+
+/* ──────────────── PORTFOLIO SIMULATOR ──────────────── */
+.port-header{
+  display:flex;justify-content:space-between;align-items:center
+}
+.subline{color:var(--sub);font-size:.9rem;margin:.3rem 0 1.1rem}
+.port-form{
+  display:grid;gap:1rem;margin-bottom:1.4rem;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr))
+}
+.port-form label{display:flex;flex-direction:column;font-size:.84rem}
 .port-form input,.port-form select{
-  padding:.45rem;border-radius:6px;border:none;background:#0d2235;color:#fff}
-.port-form button{background:var(--accent);color:#001323;border:none;border-radius:6px;padding:.55rem;font-weight:600;cursor:pointer}
-.port-grid{display:grid;gap:1.2rem;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
-.port-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1rem;display:flex;flex-direction:column;gap:.45rem}
-.port-card h4{margin:0;font-size:1.05rem}
+  padding:.45rem;border:none;border-radius:6px;
+  background:#0d2235;color:#fff
+}
+.port-form button{
+  background:var(--accent);
+  color:#001323;font-weight:600;padding:.55rem;
+  border:none;border-radius:6px;cursor:pointer
+}
+
+.port-grid{
+  display:grid;gap:1.2rem;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr))
+}
+.port-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:1rem;display:flex;flex-direction:column;gap:.45rem
+}
+.port-card h4{margin:0;font-size:1.07rem}
 .port-card .pl{font-weight:600}
-.port-card .ai{margin-top:.3rem;font-size:.78rem;color:var(--sub)}
-/* ---- page toggling & active nav ---- */
-.page{display:none}.page.active{display:block}
-.side-nav button.active{background:rgba(255,255,255,.07)}
+.port-card .ai{font-size:.78rem;color:var(--sub);margin-top:.25rem}
 
-/* ---- macro + chart side-by-side ---- */
-.macro-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
-.macro-box{overflow:auto}      /* keep original table look */
-.chart-box{width:100%;height:420px;border:1px solid var(--border);
-           border-radius:12px;background:#0d2235}
-@media(max-width:1023px){.macro-wrap{grid-template-columns:1fr}}
+/* ──────────────── TOGGLE SWITCH ──────────────── */
+.toggle{display:inline-flex;align-items:center;gap:.45rem}
+.toggle input{display:none}
+.toggle .slider{
+  position:relative;width:34px;height:18px;
+  background:#888;border-radius:20px;transition:.3s
+}
+.toggle .slider::before{
+  content:'';position:absolute;top:2px;left:2px;
+  width:14px;height:14px;background:#fff;border-radius:50%;transition:.3s
+}
+.toggle input:checked + .slider{background:var(--accent)}
+.toggle input:checked + .slider::before{transform:translateX(16px)}
+.label-text{font-size:.8rem;color:var(--sub)}
 
-
-/* ---- portfolio table ---- */
-.portfolio-table{width:100%;font-size:.83rem;border-collapse:collapse;margin-top:.8rem}
-.portfolio-table th{color:var(--sub);text-align:left;padding-bottom:6px}
-.portfolio-table td{padding:.5rem 0;border-bottom:1px solid var(--border)}
+/* ──────────────── BOTTOM BAR (MOBILE) ──────────────── */
+.bottom-bar{
+  display:none;
+  background:var(--panel);
+  border-top:1px solid var(--border);
+  padding:.6rem 0;
+  justify-content:space-around;align-items:center
+}
+.bottom-bar button{background:none;border:none;color:var(--accent);cursor:pointer}
+.bottom-bar button.active i{stroke:var(--bg)}
+.bottom-bar i{width:24px;height:24px}
+@media(max-width:767px){.bottom-bar{display:flex}}
