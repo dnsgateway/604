@@ -1,0 +1,23 @@
+/* page toggling */
+.page{display:none}
+.page.active{display:block}
+
+/* side-nav active feedback */
+.side-nav button.active{background:rgba(255,255,255,.07)}
+
+/* indicator lines in cards */
+.card .sma,.card .rsi{
+  font-size:.75rem;
+  color:var(--sub);
+  margin-top:.2rem;
+}
+
+/* Live-chart box */
+.chart-box{
+  width:100%;
+  height:480px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#0d2235;
+  margin-top:1rem;
+}
