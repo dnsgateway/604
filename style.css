@@ -220,6 +220,31 @@ body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
   background:#0d2235;
   margin-top:1rem;
 }
+
+/* --- page toggle & active nav --- */
+.page{display:none}.page.active{display:block}
+.side-nav button.active{background:rgba(255,255,255,.07)}
+
+/* --- macro + chart 2-col --- */
+.macro-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem}
+.macro-box{overflow:auto}
+.chart-box{width:100%;height:420px;border:1px solid var(--border);
+           border-radius:12px;background:#0d2235}
+@media(max-width:1023px){.macro-wrap{grid-template-columns:1fr}}
+
+/* --- portfolio simulator --- */
+.port-header{display:flex;justify-content:space-between;align-items:center}
+.subline{color:var(--sub);margin:.3rem 0 1rem;font-size:.9rem}
+.port-form{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:1.5rem}
+.port-form label{display:flex;flex-direction:column;font-size:.85rem}
+.port-form input,.port-form select{
+  padding:.45rem;border-radius:6px;border:none;background:#0d2235;color:#fff}
+.port-form button{background:var(--accent);color:#001323;border:none;border-radius:6px;padding:.55rem;font-weight:600;cursor:pointer}
+.port-grid{display:grid;gap:1.2rem;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.port-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1rem;display:flex;flex-direction:column;gap:.45rem}
+.port-card h4{margin:0;font-size:1.05rem}
+.port-card .pl{font-weight:600}
+.port-card .ai{margin-top:.3rem;font-size:.78rem;color:var(--sub)}
 /* ---- page toggling & active nav ---- */
 .page{display:none}.page.active{display:block}
 .side-nav button.active{background:rgba(255,255,255,.07)}
@@ -230,6 +255,7 @@ body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
 .chart-box{width:100%;height:420px;border:1px solid var(--border);
            border-radius:12px;background:#0d2235}
 @media(max-width:1023px){.macro-wrap{grid-template-columns:1fr}}
+
 
 /* ---- portfolio table ---- */
 .portfolio-table{width:100%;font-size:.83rem;border-collapse:collapse;margin-top:.8rem}
