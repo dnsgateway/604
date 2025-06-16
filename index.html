@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Forex Simulator • AI Dashboard</title>
+  <title>Forex Trade Explorer</title>
 
-  <!-- Icons + Lightweight-Charts -->
+  <!-- Feather + Lightweight-Charts -->
   <script src="https://unpkg.com/feather-icons"></script>
   <script src="https://unpkg.com/lightweight-charts@4/dist/lightweight-charts.standalone.production.js"></script>
 
@@ -24,25 +24,25 @@
     </div>
 
     <nav class="side-nav">
-      <button data-page="rates"><i data-feather="smartphone"></i><span>Rates</span></button>
-      <button data-page="macro"><i data-feather="trending-up"></i><span>Macro & Chart</span></button>
-      <button data-page="portfolio"><i data-feather="folder"></i><span>Portfolio</span></button>
+      <button data-page="rates"><i data-feather="smartphone"></i><span>Forex Rates</span></button>
+      <button data-page="macro"><i data-feather="trending-up"></i><span>Macro + Chart</span></button>
+      <button data-page="portfolio"><i data-feather="folder"></i><span>Portfolio Sim.</span></button>
       <button data-page="settings"><i data-feather="settings"></i><span>Settings</span></button>
     </nav>
   </aside>
 
-  <!-- ───── Main ───── -->
+  <!-- ───── Main Content ───── -->
   <main class="main">
 
-    <!-- 💱 PRICE CARDS -->
+    <!-- 🟢 1. PRICE CARDS -->
     <section id="rates" class="page active">
       <header class="hero">
         <h1>Forex Trade Explorer</h1>
-        <p>Real-time metrics &amp; AI-driven insights</p>
+        <p>Track key metrics &amp; real-time AI-driven strategies</p>
       </header>
 
       <div class="rates-grid">
-        <article class="card" data-pair="EURUSD">
+        <article class="card"  data-pair="EURUSD">
           <h3>EUR/USD</h3>
           <p class="rate">Price <span class="price">--</span></p>
           <p class="sma">SMA-20 <span>--</span></p>
@@ -65,12 +65,12 @@
       </div>
     </section>
 
-    <!-- 🌐 MACRO + 📈 CHART (side-by-side) -->
+    <!-- 🟢 2. MACRO + CHART (side-by-side) -->
     <section id="macro" class="page macro-wrap">
       <div class="macro-box">
         <h2>Macro Events &amp; Metrics</h2>
         <table class="macro-table">
-          <thead><tr><th>Pair</th><th>Vol.</th><th>Δ</th><th>Event</th></tr></thead>
+          <thead><tr><th>Pair</th><th>Vol.</th><th>Rate Δ</th><th>Event</th></tr></thead>
           <tbody>
             <tr><td>EUR/USD</td><td>8.2 %</td><td class="down">-0.75 %</td><td>ECB Rate Decision</td></tr>
             <tr><td>USD/JPY</td><td>7.8 %</td><td class="up">+2.1 %</td><td>BoJ Press Conf.</td></tr>
@@ -79,36 +79,33 @@
         </table>
       </div>
 
-      <div class="chart-box" id="macroChart"></div>
+      <!-- Right-hand live chart -->
+      <div id="macroChart" class="chart-box" aria-label="EUR/USD live chart"></div>
     </section>
 
-    <!-- 💼 PORTFOLIO SIM -->
+    <!-- 🟢 3. PORTFOLIO SIMULATOR -->
     <section id="portfolio" class="page port-sim">
-      <div class="trade-sim-header">
-        <h2>Portfolio Simulator</h2>
+      <div class="port-header">
+        <h2>Forex Portfolio Simulator</h2>
         <label class="toggle">
           <input type="checkbox" id="aiPortToggle"><span class="slider"></span>
-          <span class="label-text">AI assist</span>
+          <span class="label-text">AI Assist</span>
         </label>
       </div>
+      <p class="subline">AI-driven insights &amp; trade recommendations</p>
 
-      <form id="portForm" class="sim-form">
-        <label>Pair:<select id="pPair">
-          <option>EUR/USD</option><option>USD/JPY</option><option>GBP/USD</option></select></label>
-        <label>Direction:<select id="pDir"><option>Buy</option><option>Sell</option></select></label>
-        <label>Units:<input type="number" id="pUnits" placeholder="10 000" required></label>
+      <form id="portForm" class="port-form">
+        <label>Pair:<select id="pPair"><option>EUR/USD</option><option>USD/JPY</option><option>GBP/USD</option></select></label>
+        <label>Dir:<select id="pDir"><option>Buy</option><option>Sell</option></select></label>
+        <label>Units:<input type="number" id="pUnits" placeholder="25 000" required></label>
         <label>Entry:<input type="number" id="pEntry" step="0.0001" required></label>
-        <button type="submit">Add Position</button>
+        <button type="submit">Add</button>
       </form>
 
-      <h3>Open Positions</h3>
-      <table class="portfolio-table" id="portTable">
-        <thead><tr><th>Pair</th><th>Dir</th><th>Units</th><th>Entry</th><th>Mark</th><th>P/L</th></tr></thead>
-        <tbody></tbody>
-      </table>
+      <div id="portGrid" class="port-grid"><!-- cards injected by JS --></div>
     </section>
 
-    <!-- ⚙️ SETTINGS -->
+    <!-- 🟢 4. SETTINGS -->
     <section id="settings" class="page settings">
       <h2>Settings</h2>
       <label class="toggle">
@@ -123,7 +120,7 @@
 
   </main>
 
-  <!-- bottom bar (mobile) -->
+  <!-- mobile bottom bar -->
   <nav class="bottom-bar">
     <button data-page="rates"><i data-feather="smartphone"></i></button>
     <button data-page="macro"><i data-feather="trending-up"></i></button>
@@ -131,77 +128,7 @@
   </nav>
 </div>
 
-<!-- ───────── SCRIPTS ───────── -->
-<script>
-feather.replace();
-
-/* ----- router ----- */
-const pages=document.querySelectorAll('.page'),navBtns=document.querySelectorAll('[data-page]'),sidebar=document.getElementById('sidebar');
-function show(id){pages.forEach(p=>p.classList.toggle('active',p.id===id));navBtns.forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(innerWidth<768)sidebar.classList.remove('open');}
-navBtns.forEach(b=>b.onclick=()=>show(b.dataset.page));show('rates');
-hamburger.onclick=()=>sidebar.classList.toggle('open');
-
-/* ----- theme toggles ----- */
-matrixToggle.onchange=e=>document.body.classList.toggle('matrix',e.target.checked);
-blurToggle.onchange  =e=>document.body.classList.toggle('blurred',e.target.checked);
-
-/* ----- price snapshot ----- */
-const snapUrl='https://api.exchangerate.host/latest?base=USD';
-let latestPrices={};
-fetch(snapUrl).then(r=>r.json()).then(d=>{
-  latestPrices=d.rates;
-  document.querySelector('[data-pair="EURUSD"] .price').textContent=(1/d.rates.EUR).toFixed(4);
-  document.querySelector('[data-pair="USDJPY"] .price').textContent=d.rates.JPY.toFixed(2);
-  document.querySelector('[data-pair="GBPUSD"] .price').textContent=(1/d.rates.GBP).toFixed(4);
-  updatePortPL();
-});
-
-/* ----- SMA & RSI (same calc as before) ----- */
-(async()=>{const end=new Date().toISOString().slice(0,10),start=new Date(Date.now()-32*864e5).toISOString().slice(0,10);
-const meta=[{pair:'EURUSD',base:'USD',q:'EUR',inv:true},{pair:'USDJPY',base:'USD',q:'JPY'},{pair:'GBPUSD',base:'USD',q:'GBP',inv:true}];
-for(const m of meta){const url=`https://api.exchangerate.host/timeseries?start_date=${start}&end_date=${end}&base=${m.base}&symbols=${m.q}`;
-const js=await fetch(url).then(r=>r.json()).catch(()=>null);if(!js)continue;
-const closes=Object.entries(js.rates).sort((a,b)=>new Date(a[0])-new Date(b[0])).map(e=>m.inv?1/e[1][m.q]:e[1][m.q]);
-const sma=closes.slice(-20).reduce((a,b)=>a+b,0)/20;let g=0,l=0;for(let i=closes.length-15;i<closes.length-1;i++){const d=closes[i+1]-closes[i];d>0?g+=d:l-=d;}const rs=g/(l||.0001),rsi=100-100/(1+rs);
-const card=document.querySelector(`[data-pair="${m.pair}"]`);card.querySelector('.sma span').textContent=sma.toFixed(4);card.querySelector('.rsi span').textContent=rsi.toFixed(1);} })();
-
-/* ----- Lightweight chart (EUR/USD daily closes) ----- */
-const chartBox=document.getElementById('macroChart'),chart=LightweightCharts.createChart(chartBox,{layout:{background:{color:'transparent'},textColor:'var(--txt)'},
-grid:{vertLines:{color:'rgba(255,255,255,.06)'},horzLines:{color:'rgba(255,255,255,.06)'}},timeScale:{timeVisible:true}}),
-series=chart.addCandlestickSeries({upColor:'var(--up)',downColor:'var(--down)',borderVisible:false,wickUpColor:'var(--up)',wickDownColor:'var(--down)'});resize();window.addEventListener('resize',resize);
-function resize(){chart.applyOptions({width:chartBox.clientWidth,height:420});}
-fetchDaily();
-async function fetchDaily(){const end=new Date(),start=new Date(end.getTime()-380*864e5);const s=start.toISOString().slice(0,10),e=end.toISOString().slice(0,10);
-const js=await fetch(`https://api.exchangerate.host/timeseries?start_date=${s}&end_date=${e}&base=USD&symbols=EUR`).then(r=>r.json());const bars=Object.entries(js.rates).map(([d,v])=>{const p=1/v.EUR;return{time:d,open:p,high:p,low:p,close:p};});
-series.setData(bars);}
-
-/* ----- Portfolio simulator ----- */
-const port=[];
-portForm.onsubmit=e=>{
-  e.preventDefault();
-  const row={pair:pPair.value,dir:pDir.value,units:+pUnits.value,entry:+pEntry.value};
-  row.ai = aiPortToggle.checked;
-  port.push(row); renderPort();
-  pUnits.value='';pEntry.value='';
-};
-function renderPort(){
-  const tbody=portTable.querySelector('tbody');tbody.innerHTML='';
-  port.forEach((p,i)=>{
-    const mark=getMark(p.pair),pl=(p.dir==='Buy'?(mark-p.entry):(p.entry-mark))*p.units;
-    tbody.insertAdjacentHTML('beforeend',`<tr>
-      <td>${p.pair}</td><td>${p.dir}</td><td>${p.units}</td>
-      <td>${p.entry.toFixed(4)}</td><td>${mark.toFixed(4)}</td>
-      <td style="color:${pl>=0?'lime':'salmon'}">${pl.toFixed(2)}</td></tr>`);
-    if(p.ai)tbody.lastElementChild.title='🤖 AI monitored';
-  });
-}
-function getMark(pair){
-  if(pair==='EUR/USD')return 1/latestPrices.EUR;
-  if(pair==='USD/JPY')return latestPrices.JPY;
-  if(pair==='GBP/USD')return 1/latestPrices.GBP;
-  return 0;
-}
-function updatePortPL(){if(port.length)renderPort();}
-</script>
+<!-- ───── JS ───── -->
+<script src="script.js"></script>
 </body>
 </html>
