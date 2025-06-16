@@ -129,6 +129,97 @@
 </div>
 
 <!-- ───── JS ───── -->
-<script src="script.js"></script>
+<script src="script.js">
+/* ------------ icons & nav router ------------ */
+feather.replace();
+const pages  = document.querySelectorAll('.page');
+const navBtn = document.querySelectorAll('[data-page]');
+function show(id){pages.forEach(p=>p.classList.toggle('active',p.id===id));
+  navBtn.forEach(b=>b.classList.toggle('active',b.dataset.page===id));
+  if(innerWidth<768) sidebar.classList.remove('open');}
+navBtn.forEach(b=>b.onclick=()=>show(b.dataset.page));
+show('rates');   // default
+
+hamburger.onclick=()=>sidebar.classList.toggle('open');
+
+/* ------------ theme toggles ------------ */
+matrixToggle.onchange=e=>document.body.classList.toggle('matrix',e.target.checked);
+blurToggle  .onchange=e=>document.body.classList.toggle('blurred',e.target.checked);
+
+/* ------------ price snapshot & indicators ------------ */
+let latest={};
+fetch('https://api.exchangerate.host/latest?base=USD').then(r=>r.json()).then(d=>{latest=d.rates;setCards();updatePL();});
+function setCards(){
+  const map=[['EURUSD','EUR',true],['USDJPY','JPY',false],['GBPUSD','GBP',true]];
+  map.forEach(([code,quote,inv])=>{
+    const price=inv?1/latest[quote]:latest[quote];
+    document.querySelector(`[data-pair="${code}"] .price`).textContent=price.toFixed(4);
+  });
+}
+
+/* --- SMA & RSI (same as before) --- */
+(async()=>{
+  const end=new Date().toISOString().slice(0,10),start=new Date(Date.now()-32*864e5).toISOString().slice(0,10);
+  const meta=[{pair:'EURUSD',q:'EUR',inv:true},{pair:'USDJPY',q:'JPY'},{pair:'GBPUSD',q:'GBP',inv:true}];
+  for(const m of meta){
+    const url=`https://api.exchangerate.host/timeseries?start_date=${start}&end_date=${end}&base=USD&symbols=${m.q}`;
+    const js=await fetch(url).then(r=>r.json()).catch(()=>null);if(!js)continue;
+    const closes=Object.values(js.rates).map(v=>m.inv?1/v[m.q]:v[m.q]);
+    const sma=closes.slice(-20).reduce((a,b)=>a+b,0)/20;
+    let g=0,l=0;for(let i=closes.length-15;i<closes.length-1;i++){const d=closes[i+1]-closes[i];d>0?g+=d:l-=d;}
+    const rsi=100-100/(1+g/(l||.0001));
+    const card=document.querySelector(`[data-pair="${m.pair}"]`);
+    card.querySelector('.sma span').textContent=sma.toFixed(4);
+    card.querySelector('.rsi span').textContent=rsi.toFixed(1);
+  }
+})();
+
+/* ------------ lightweight daily chart (EUR/USD) ------------ */
+const chartBox=document.getElementById('macroChart');
+const chart=LightweightCharts.createChart(chartBox,{layout:{background:{color:'transparent'},textColor:'var(--txt)'},
+    grid:{vertLines:{color:'rgba(255,255,255,.06)'},horzLines:{color:'rgba(255,255,255,.06)'}},timeScale:{timeVisible:true}});
+const series=chart.addCandlestickSeries({upColor:'var(--up)',downColor:'var(--down)',
+  wickUpColor:'var(--up)',wickDownColor:'var(--down)',borderVisible:false});
+window.addEventListener('resize',()=>chart.applyOptions({width:chartBox.clientWidth}));
+fetchDaily();
+async function fetchDaily(){
+  const end=new Date(),start=new Date(end.getTime()-380*864e5);
+  const url=`https://api.exchangerate.host/timeseries?start_date=${d(start)}&end_date=${d(end)}&base=USD&symbols=EUR`;
+  const js=await fetch(url).then(r=>r.json());
+  const data=Object.entries(js.rates).map(([day,v])=>{const p=1/v.EUR;return{time:day,open:p,high:p,low:p,close:p};});
+  series.setData(data);chart.applyOptions({width:chartBox.clientWidth,height:420});
+}
+function d(dt){return dt.toISOString().slice(0,10);}
+
+/* ------------ portfolio simulator ------------ */
+const port=[];           // open positions
+portForm.onsubmit=e=>{
+  e.preventDefault();
+  port.push({pair:pPair.value,dir:pDir.value,units:+pUnits.value,entry:+pEntry.value,ai:aiPortToggle.checked});
+  renderPort(); pUnits.value=''; pEntry.value='';
+};
+function renderPort(){
+  portGrid.innerHTML='';
+  port.forEach(p=>{
+    const mark=getMark(p.pair),pl=((p.dir==='Buy'?mark-p.entry:p.entry-mark)*p.units).toFixed(2);
+    portGrid.insertAdjacentHTML('beforeend',`
+      <div class="port-card">
+        <h4>${p.pair}</h4>
+        <div>Entry&nbsp;Price <span>${p.entry.toFixed(4)}</span></div>
+        <div>Current&nbsp;Price <span>${mark.toFixed(4)}</span></div>
+        <div>Units <span>${p.units.toLocaleString()}</span></div>
+        <div class="pl">P/L <span style="color:${pl>=0?'lime':'salmon'}">${pl}</span></div>
+        <div class="ai">${p.ai?'AI INSIGHTS<br><em>Hold per trend analysis</em>':''}</div>
+      </div>`);});
+}
+function getMark(pair){
+  if(pair==='EUR/USD') return 1/latest.EUR;
+  if(pair==='USD/JPY') return latest.JPY;
+  if(pair==='GBP/USD') return 1/latest.GBP;
+  return 0;
+}
+function updatePL(){if(port.length)renderPort();}
+  
+</script>
 </body>
 </html>
