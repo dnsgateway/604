@@ -171,27 +171,6 @@ body.blurred::after{
   background:#0d2235
 }
 
-/* ─── Macro Events + TradingView Chart Layout ─── */
-.macro-chart-section {
-  display: flex;
-  gap: 2rem;
-  margin-bottom: 3rem;
-  flex-wrap: wrap;
-}
-
-.macro-chart-section .macro {
-  flex: 1 1 420px;
-}
-
-.chart-container {
-  flex: 1 1 600px;
-  min-height: 350px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
 /* ──────────────── PORTFOLIO SIMULATOR ──────────────── */
 .port-header{
   display:flex;justify-content:space-between;align-items:center
