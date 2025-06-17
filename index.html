@@ -80,7 +80,24 @@
       </div>
 
       <!-- Right-hand live chart -->
-      <div id="macroChart" class="chart-box" aria-label="EUR/USD live chart"></div>
+      <!-- RIGHT — TradingView widget (placeholder 100%×420px) -->
+      <div class="chart-box">
+        <iframe
+          id="tvChart"
+          src="https://s.tradingview.com/widgetembed/?frameElementId=tvChart
+               &symbol=FX%3AEURUSD
+               &interval=30
+               &symboledit=1
+               &saveimage=1
+               &toolbarbg=1e293b
+               &studies=%5B%5D
+               &theme=dark
+               &style=1
+               &timezone=Etc%2FUTC"
+          style="width:100%;height:420px;border:none"
+          allowtransparency="true" scrolling="no">
+        </iframe>
+      </div>
     </section>
 
     <!-- 🟢 3. PORTFOLIO SIMULATOR -->
