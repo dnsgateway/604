@@ -182,28 +182,25 @@
 <!-- ───── JS ───── -->
 <script>
 /**************************************************
-  script.js — metrics fix + AI-Trade-Plan popup
+  script.js — Robust metrics + enhanced AI Assist
 **************************************************/
 
-/* ▸ 1  Router & icons */
+/* 1 ▸ Router & Icons */
 feather.replace();
-const pages=document.querySelectorAll('.page'),
-      nav=document.querySelectorAll('[data-page]'),
-      sidebar=document.getElementById('sidebar');
+const pages=document.querySelectorAll('.page'),nav=document.querySelectorAll('[data-page]'),sidebar=document.getElementById('sidebar');
 function show(id){pages.forEach(p=>p.classList.toggle('active',p.id===id));
   nav.forEach(b=>b.classList.toggle('active',b.dataset.page===id));
   if(innerWidth<768)sidebar.classList.remove('open');}
-nav.forEach(b=>b.onclick=()=>show(b.dataset.page));show('rates');
-hamburger.onclick=()=>sidebar.classList.toggle('open');
+nav.forEach(b=>b.onclick=()=>show(b.dataset.page));show('rates');hamburger.onclick=()=>sidebar.classList.toggle('open');
 
-/* ▸ 2  Theme toggles */
+/* 2 ▸ Theme */
 matrixToggle.onchange=e=>document.body.classList.toggle('matrix',e.target.checked);
 blurToggle  .onchange=e=>document.body.classList.toggle('blurred',e.target.checked);
 
-/* ▸ 3  Global stores */
+/* 3 ▸ Global stores */
 const latest={},barsDB={},metrics={};
 
-/* ▸ 4  Pairs */
+/* 4 ▸ Pairs definition */
 const PAIRS=[
   {key:'EUR/USD',tv:'FX:EURUSD',q:'EUR',inv:true},
   {key:'USD/JPY',tv:'FX:USDJPY',q:'JPY',inv:false},
@@ -211,36 +208,37 @@ const PAIRS=[
   {key:'AUD/USD',tv:'FX:AUDUSD',q:'AUD',inv:true}
 ];
 
-/* ▸ 5  Init pipeline */
+/* 5 ▸ Init pipeline */
 (async()=>{
   await Promise.all(PAIRS.map(loadPair));
-  calcIndicators();updateCards();setInterval(refreshSnapshot,6e4);
+  calcIndicators(); updateCards(); setInterval(refreshSnapshot,6e4);
 })();
 
-/* ▸ 6  Utility */
+/* 6 ▸ Helpers */
 const today=()=>Math.floor(Date.now()/1e3);
-const iso=d=>d.toISOString().slice(0,10);
-const tvURL=(sym,f,t)=>`https://tvd.tradingview.com/history?symbol=${encodeURIComponent(sym)}&resolution=D&from=${f}&to=${t}`;
+function tvURL(sym,f,t){return `https://tvd.tradingview.com/history?symbol=${encodeURIComponent(sym)}&resolution=D&from=${f}&to=${t}`;}
+function iso(d){return d.toISOString().slice(0,10);}
 function priceOf(pair){
   if(pair==='EUR/USD')return 1/latest.EUR;
   if(pair==='USD/JPY')return latest.JPY;
   if(pair==='GBP/USD')return 1/latest.GBP;
   if(pair==='AUD/USD')return 1/latest.AUD;
 }
-function skeleton(k){if(!metrics[k])metrics[k]={price:priceOf(k),sma:'--',rsi:'--'};}
 
-/* ▸ 7  Loaders */
+/* 7 ▸ core loaders (TV → fallback → snapshot-1d) */
 async function loadPair(p){
-  const to=today(),from=to-60*86400;
+  const to=today(),from=to-60*86400,url=tvURL(p.tv,from,to);
   try{
-    const j=await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(tvURL(p.tv,from,to))}`).then(r=>r.json());
+    const j=await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`).then(r=>r.json());
     if(j.s!=='ok'||!j.c?.length)throw 0;
     barsDB[p.key]=j.t.map((t,i)=>({time:iso(new Date(t*1e3)),open:j.o[i],high:j.h[i],low:j.l[i],close:j.c[i]}));
     latest[p.q]=p.inv?1/j.c.at(-1):j.c.at(-1);
-  }catch{await altLoad(p);}
+  }catch{
+    await altLoad(p);           // fallback
+  }
   skeleton(p.key);
 }
-async function altLoad(p){
+async function altLoad(p){                 // exchangerate-host  (always 1-day behind but reliable)
   const end=new Date(Date.now()-864e5),start=new Date(end.getTime()-60*864e5);
   const url=`https://api.exchangerate.host/timeseries?start_date=${iso(start)}&end_date=${iso(end)}&base=USD&symbols=${p.q}`;
   const j=await fetch(url).then(r=>r.json());
@@ -248,24 +246,23 @@ async function altLoad(p){
     const px=p.inv?1/v[p.q]:v[p.q];return{time:d,open:px,high:px,low:px,close:px};
   });
   latest[p.q]=p.inv?1/j.rates[iso(end)][p.q]:j.rates[iso(end)][p.q];
-  skeleton(p.key);
 }
+function skeleton(pair){if(!metrics[pair])metrics[pair]={price:priceOf(pair),sma:'--',rsi:'--'};}
 
-/* ▸ 8  Indicators */
+/* 8 ▸ Indicators */
 function calcIndicators(){
   for(const [pair,b] of Object.entries(barsDB)){
     if(b.length<21)continue;
-    const closes=b.map(x=>x.close),
-          sma=closes.slice(-20).reduce((a,c)=>a+c,0)/20;
-    let up=0,dn=0;for(let i=closes.length-15;i<closes.length-1;i++){
-      const d=closes[i+1]-closes[i];d>0?up+=d:dn-=d;}
+    const closes=b.map(x=>x.close),sma=closes.slice(-20).reduce((a,c)=>a+c,0)/20;
+    let up=0,dn=0;for(let i=closes.length-15;i<closes.length-1;i++){const d=closes[i+1]-closes[i];d>0?up+=d:dn-=d;}
     const rsi=100-100/(1+up/(dn||.0001));
-    const atr= b.slice(-15).reduce((a,c)=>a+(c.high-c.low),0)/15;
+    const tr=[];for(let i=b.length-15;i<b.length;i++)tr.push(b[i].high-b[i].low);
+    const atr=tr.reduce((a,c)=>a+c,0)/tr.length;
     metrics[pair]={price:closes.at(-1),sma,rsi,atr};
   }
 }
 
-/* ▸ 9  Card update */
+/* 9 ▸ Card update */
 function updateCards(){
   PAIRS.forEach(p=>{
     const m=metrics[p.key]||{};if(!m.price)m.price=priceOf(p.key);
@@ -278,115 +275,60 @@ function updateCards(){
   });
 }
 
-/* ▸ 10  Snapshot refresh */
+/* 10 ▸ live snapshot (1-day-behind safe) */
 async function refreshSnapshot(){
   const snap=await fetch('https://api.exchangerate.host/latest?base=USD').then(r=>r.json());
   Object.assign(latest,snap.rates);updateCards();updatePL();
 }
 
-/* ▸ 11  AI 2.0  (pattern + SR + prob) */
-function detectPattern(b){if(!b||b.length<2)return null;
-  const[p,l]=b.slice(-2);
-  if(p.close<p.open&&l.close>l.open&&l.close>p.open&&l.open<p.close)return'BULL';
-  if(p.close>p.open&&l.close<l.open&&l.open>p.close&&l.close<p.open)return'BEAR';
-  if(l.high<p.high&&l.low>p.low)return'INSIDE';return null;}
-function fractalSR(b,px){const w=40,lows=[],highs=[];
-  for(let i=2;i<w-2;i++){const c=b.slice(-w)[i];
-    if(c.low<b[i-1]?.low&&c.low<b[i-2]?.low)lows.push(c.low);
-    if(c.high>b[i-1]?.high&&c.high>b[i-2]?.high)highs.push(c.high);}
-  return{support:Math.max(...lows.filter(v=>v<px),-Infinity),
-         resistance:Math.min(...highs.filter(v=>v>px),Infinity)};}
-function zProb(p,t,σ,d){const z=Math.abs(t-p)/(σ*Math.sqrt(d));
-  return (1-Math.erf(z/Math.SQRT2))*100;}
-function mcProb(p,σ,d,t,long){
-  let hit=0,N=400,dt=1/252;
-  for(let k=0;k<N;k++){let s=p;
-    for(let i=0;i<d;i++){const r=Math.random()*2-1;
-      s*=Math.exp((-0.5*σ*σ)*dt+σ*Math.sqrt(dt)*r);}
-    if(long?s>=t:s<=t)hit++;}
-  return hit/N*100;}
-function bayesAdj(pair,dir,prob){
-  const k=`post_${pair}_${dir}`,
-        js=JSON.parse(localStorage.getItem(k)||'{"a":2,"b":2}');
-  const blended=(prob*0.7)+((js.a/(js.a+js.b))*100*0.3);
-  (Math.random()*100<prob?js.a++:js.b++);
-  localStorage.setItem(k,JSON.stringify(js));return blended;}
-function aiSuggest(pair,dir,entry,uRSI,uSMA,uExit){
-  const b=barsDB[pair],m={...metrics[pair]};
-  if(uRSI)m.rsi=uRSI;if(uSMA)m.sma=uSMA;
-  const σ=m.atr||0.001,days=5;
-  const{support,resistance}=fractalSR(b,m.price);
+/* 11 ▸ AI Support / Resistance + probability */
+function nearestSR(bars,price){        // naive: max(low), min(high) in last 20
+  if(!bars)return{};const slice=bars.slice(-20);
+  const support=Math.max(...slice.map(x=>x.low).filter(x=>x<price));
+  const resistance=Math.min(...slice.map(x=>x.high).filter(x=>x>price));
+  return{support,resistance};
+}
+function aiSuggest(inPair,dir,entry,userRSI,userSMA,userExit){
+  const m={...metrics[inPair]},bars=barsDB[inPair];
+  if(userRSI)m.rsi=userRSI;if(userSMA)m.sma=userSMA;
+  const {support,resistance}=nearestSR(bars,m.price);
+  const atr=m.atr||((resistance-support)/4)||0.002;
   const stop=dir==='Buy'?support:resistance;
-  const tgt =uExit ?? (dir==='Buy'?entry+2*σ:entry-2*σ);
-  const pA  =zProb(m.price,tgt,σ,days),
-        pMC =mcProb(m.price,σ,days,tgt,dir==='Buy');
-  let prob=bayesAdj(pair,dir,(pA*0.4+pMC*0.6));
-  const pat=detectPattern(b);
-  let note=`SR ${support.toFixed(4)} / ${resistance.toFixed(4)} • P≈${prob.toFixed(1)}%`;
-  if(pat==='BULL') note='📈 B-engulf • '+note;
-  if(pat==='BEAR') note='📉 B-engulf • '+note;
-  if(pat==='INSIDE')note='📊 Inside • '+note;
-  if(uRSI||uSMA)note='⚙ override • '+note;
-  return{stop,tgt,note};
+  const targ=userExit|| (dir==='Buy'?entry+2*atr:entry-2*atr);
+  /* simple prob: 1-exp(-dist/(atr*sqrt(days))) */
+  const days=5,dist=Math.abs(targ-m.price);
+  const prob=(1-Math.exp(-dist/(atr*Math.sqrt(days))))*100;
+  let note=`RS:${support?.toFixed(4)||'-'} / ${resistance?.toFixed(4)||'-'} • P≈${prob.toFixed(1)}%`;
+  if(userRSI||userSMA)note=`⚙ custom metrics • `+note;
+  return{stop,tgt:targ,note};
 }
 
-/* ▸ 12  Portfolio + Modal */
-const pos=[],planModal=document.getElementById('planModal'),
-      planAddBtn=document.getElementById('planAddBtn'),
-      planCloseBtn=document.getElementById('planCloseBtn');
-function showModal(){planModal.classList.remove('hidden');document.body.classList.add('noscroll');planCloseBtn.focus();}
-function hideModal(){planModal.classList.add('hidden');document.body.classList.remove('noscroll');}
-
-/* push helper */
-function push(obj){pos.push(obj);render();}
-
-portForm.onsubmit=e=>{
+/* 12 ▸ Portfolio Simulator */
+const pos=[];portForm.onsubmit=e=>{
   e.preventDefault();
-  const pair=pPair.value,dir=pDir.value,units=+pUnits.value,
-        entry=+pEntry.value||priceOf(pair),
-        rsi =+pRSI.value||undefined,
-        sma =+pSMA.value||undefined,
-        exit=+pExit.value||undefined;
-  if(aiPortToggle.checked){
-      const ai=aiSuggest(pair,dir,entry,rsi,sma,exit);
-      /* fill popup */
-      plPair.textContent =pair;
-      plEntry.textContent=entry.toFixed(4);
-      plStop.textContent =ai.stop.toFixed(4);
-      plTgt.textContent  =ai.tgt.toFixed(4);
-      plRSI.textContent  =(rsi??metrics[pair].rsi).toFixed(1);
-      plSMA.textContent  =(sma??metrics[pair].sma).toFixed(4);
-      const rr=Math.abs(ai.tgt-entry)/Math.abs(entry-ai.stop);
-      plRR.textContent=rr.toFixed(2);
-      plConf.textContent=ai.note.match(/P≈([\d.]+)/)?.[1]+'%';
-      plNote.textContent=ai.note.replace(/P≈[\d.]+%/,'').trim();
-      planModal.dataset.tmp=JSON.stringify({pair,dir,units,entry,rsi,sma,exit,...ai});
-      showModal();
-  }else push({pair,dir,units,entry,rsi,sma,exit});
-  pUnits.value='';pEntry.value='';
+  const pair=pPair.value,dir=pDir.value,units=+pUnits.value,entry=+pEntry.value||priceOf(pair),
+        rsi=+pRSI.value||undefined,sma=+pSMA.value||undefined,exit=+pExit.value||undefined;
+  const ai=aiPortToggle.checked?aiSuggest(pair,dir,entry,rsi,sma,exit):{};
+  pos.push({pair,dir,units,entry,rsi,sma,exit,...ai});render();pUnits.value='';pEntry.value='';
 };
-
-planAddBtn.onclick=()=>{push(JSON.parse(planModal.dataset.tmp));hideModal();};
-planCloseBtn.onclick=hideModal;
-planModal.addEventListener('click',e=>{if(e.target===planModal)hideModal();});
-window.addEventListener('keydown',e=>{if(!planModal.classList.contains('hidden')&&e.key==='Escape')hideModal();});
-
-/* render */
-function render(){portGrid.innerHTML='';pos.forEach(p=>{
-  const mp=priceOf(p.pair);const pl=((p.dir==='Buy'?mp-p.entry:p.entry-mp)*p.units).toFixed(2);
-  portGrid.insertAdjacentHTML('beforeend',`
-  <div class="port-card">
-    <h4>${p.pair}</h4>
-    <div>Entry <span>${p.entry.toFixed(4)}</span></div>
-    <div>Mark  <span>${mp.toFixed(4)}</span></div>
-    ${p.stop?`<div>Stop  <span>${p.stop.toFixed(4)}</span></div>`:''}
-    ${p.tgt ?`<div>Target<span>${p.tgt.toFixed(4)}</span></div>`:''}
-    ${p.rsi?`<div>RSI   <span>${p.rsi}</span></div>`:''}
-    ${p.sma?`<div>SMA   <span>${p.sma.toFixed(4)}</span></div>`:''}
-    <div>Units <span>${p.units.toLocaleString()}</span></div>
-    <div class="pl"><b>P/L</b> <span style="color:${pl>=0?'lime':'salmon'}">${pl}</span></div>
-    ${p.note?`<div class="prob">${p.note}</div>`:''}
-  </div>`);});}
+function markPrice(p){return priceOf(p);}
+function render(){
+  portGrid.innerHTML='';pos.forEach(p=>{
+    const mp=markPrice(p.pair),pl=((p.dir==='Buy'?mp-p.entry:p.entry-mp)*p.units).toFixed(2);
+    portGrid.insertAdjacentHTML('beforeend',`
+      <div class="port-card">
+        <h4>${p.pair}</h4>
+        <div>Entry <span>${p.entry.toFixed(4)}</span></div>
+        <div>Mark  <span>${mp.toFixed(4)}</span></div>
+        ${p.stop?`<div>Stop  <span>${p.stop.toFixed(4)}</span></div>`:''}
+        ${p.tgt ?`<div>Target<span>${p.tgt.toFixed(4)}</span></div>`:''}
+        ${p.rsi?`<div>RSI in  <span>${p.rsi}</span></div>`:''}
+        ${p.sma?`<div>SMA in  <span>${p.sma.toFixed(4)}</span></div>`:''}
+        <div>Units <span>${p.units.toLocaleString()}</span></div>
+        <div class="pl"><b>P/L</b> <span style="color:${pl>=0?'lime':'salmon'}">${pl}</span></div>
+        ${p.note?`<div class="prob">${p.note}</div>`:''}
+      </div>`);});
+}
 function updatePL(){if(pos.length)render();}
 </script>
 </body>
