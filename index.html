@@ -100,49 +100,28 @@
       </div>
     </section>
 
-<!-- █ 3️⃣  PORTFOLIO SIMULATOR (updated fields) █ -->
-<section id="portfolio" class="page port-sim">
-  <div class="port-header">
-    <h2>Forex Portfolio Simulator</h2>
-    <label class="toggle">
-      <input type="checkbox" id="aiPortToggle"/>
-      <span class="slider"></span><span class="label-text">AI Assist</span>
-    </label>
-  </div>
+ <!-- 3️⃣  Portfolio Simulator -->
+    <section id="portfolio" class="page port-sim">
+      <div class="port-header">
+        <h2>Forex Portfolio Simulator</h2>
+        <label class="toggle">
+          <input type="checkbox" id="aiPortToggle"><span class="slider"></span>
+          <span class="label-text">AI Assist</span>
+        </label>
+      </div>
+      <p class="subline">AI-driven insights &amp; trade recommendations</p>
 
-  <p class="subline">Enter position details and let AI suggest a strategy.</p>
+      <form id="portForm" class="port-form">
+        <label>Pair:<select id="pPair">
+          <option>EUR/USD</option><option>USD/JPY</option><option>GBP/USD</option></select></label>
+        <label>Dir:<select id="pDir"><option>Buy</option><option>Sell</option></select></label>
+        <label>Units:<input type="number" id="pUnits" placeholder="25 000" required></label>
+        <label>Entry:<input type="number" id="pEntry" step="0.0001" required></label>
+        <button type="submit">Add</button>
+      </form>
 
-  <form id="portForm" class="port-form">
-    <!-- currency pair -->
-    <label>Pair
-      <select id="pPair">
-        <option>EUR/USD</option><option>USD/JPY</option>
-        <option>GBP/USD</option><option>USD/CAD</option>
-        <option>AUD/USD</option>
-      </select>
-    </label>
-
-    <!-- user inputs -->
-    <label>Entry Price
-      <input type="number" id="pEntry" step="0.0001" required />
-    </label>
-
-    <label>Current Price
-      <input type="number" id="pCurrent" step="0.0001" required />
-    </label>
-
-    <label>Position Size
-      <input type="number" id="pSize" placeholder="25 000" required />
-    </label>
-
-    <!-- submit -->
-    <button type="submit">Add Position</button>
-  </form>
-
-  <!-- AI/Manual cards appear here -->
-  <div id="portGrid" class="port-grid"></div>
-</section>
-
+      <div id="portGrid" class="port-grid"><!-- cards injected by JS --></div>
+    </section>
 <!-- ░░ AI-Trade-Plan Modal ░░ -->
 <div id="planModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="planTitle">
   <div class="modal-inner" tabindex="-1">
