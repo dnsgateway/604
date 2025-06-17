@@ -100,27 +100,48 @@
       </div>
     </section>
 
-    <!-- 🟢 3. PORTFOLIO SIMULATOR -->
-    <section id="portfolio" class="page port-sim">
-      <div class="port-header">
-        <h2>Forex Portfolio Simulator</h2>
-        <label class="toggle">
-          <input type="checkbox" id="aiPortToggle"><span class="slider"></span>
-          <span class="label-text">AI Assist</span>
-        </label>
-      </div>
-      <p class="subline">AI-driven insights &amp; trade recommendations</p>
+    <!-- 3️⃣  PORTFOLIO SIMULATOR (extended) -->
+<section id="portfolio" class="page port-sim">
+  <div class="port-header">
+    <h2>Forex Portfolio Simulator</h2>
+    <label class="toggle">
+      <input type="checkbox" id="aiPortToggle"><span class="slider"></span>
+      <span class="label-text">AI Assist</span>
+    </label>
+  </div>
+  <p class="subline">Select pair(s), add optional RSI / SMA overrides and target.</p>
 
-      <form id="portForm" class="port-form">
-        <label>Pair:<select id="pPair"><option>EUR/USD</option><option>USD/JPY</option><option>GBP/USD</option></select></label>
-        <label>Dir:<select id="pDir"><option>Buy</option><option>Sell</option></select></label>
-        <label>Units:<input type="number" id="pUnits" placeholder="25 000" required></label>
-        <label>Entry:<input type="number" id="pEntry" step="0.0001" required></label>
-        <button type="submit">Add</button>
-      </form>
+  <!-- multi-pair form -->
+  <form id="portForm" class="port-form">
+    <label>Pair
+      <select id="pPair">
+        <option>EUR/USD</option><option>USD/JPY</option>
+        <option>GBP/USD</option><option>AUD/USD</option>
+      </select>
+    </label>
+    <label>Dir
+      <select id="pDir"><option>Buy</option><option>Sell</option></select>
+    </label>
+    <label>Units
+      <input type="number" id="pUnits" placeholder="25 000" required>
+    </label>
+    <label>Entry
+      <input type="number" id="pEntry" step="0.0001" required>
+    </label>
+    <label>RSI (override)
+      <input type="number" id="pRSI" step="0.1" placeholder="auto">
+    </label>
+    <label>SMA (override)
+      <input type="number" id="pSMA" step="0.0001" placeholder="auto">
+    </label>
+    <label>Exit (target)
+      <input type="number" id="pExit" step="0.0001" placeholder="optional">
+    </label>
+    <button type="submit">Add</button>
+  </form>
 
-      <div id="portGrid" class="port-grid"><!-- cards injected by JS --></div>
-    </section>
+  <div id="portGrid" class="port-grid"></div>
+</section>
 
     <!-- 🟢 4. SETTINGS -->
     <section id="settings" class="page settings">
