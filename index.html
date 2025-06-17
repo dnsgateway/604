@@ -147,49 +147,30 @@
 
 <!-- ───── JS ───── -->
 <script>
-/* ------------ icons & nav router ------------ */
+/*********************************************
+  script.js  (one file – drop into <script src>)
+*********************************************/
+
+/* ---------- 1. ICONS & NAV ROUTER ---------- */
 feather.replace();
-const pages  = document.querySelectorAll('.page');
-const navBtn = document.querySelectorAll('[data-page]');
-function show(id){pages.forEach(p=>p.classList.toggle('active',p.id===id));
-  navBtn.forEach(b=>b.classList.toggle('active',b.dataset.page===id));
-  if(innerWidth<768) sidebar.classList.remove('open');}
-navBtn.forEach(b=>b.onclick=()=>show(b.dataset.page));
-show('rates');   // default
+const pages   = document.querySelectorAll('.page');
+const navBtns = document.querySelectorAll('[data-page]');
+const sidebar = document.getElementById('sidebar');
 
-hamburger.onclick=()=>sidebar.classList.toggle('open');
+function show(id){
+  pages.forEach(p=>p.classList.toggle('active',p.id===id));
+  navBtns.forEach(b=>b.classList.toggle('active',b.dataset.page===id));
+  if(innerWidth<768) sidebar.classList.remove('open');
+}
+navBtns.forEach(b=>b.onclick=()=>show(b.dataset.page));
+show('rates');                                 // default page
+hamburger.onclick = ()=>sidebar.classList.toggle('open');
 
-/* ------------ theme toggles ------------ */
-matrixToggle.onchange=e=>document.body.classList.toggle('matrix',e.target.checked);
-blurToggle  .onchange=e=>document.body.classList.toggle('blurred',e.target.checked);
+/* ---------- 2. MATRIX & BLUR TOGGLES ---------- */
+matrixToggle.onchange = e=>document.body.classList.toggle('matrix',e.target.checked);
+blurToggle  .onchange = e=>document.body.classList.toggle('blurred',e.target.checked);
 
-/* ------------ price snapshot & indicators ------------ */
-let latest={};
-fetch('https://api.exchangerate.host/latest?base=USD').then(r=>r.json()).then(d=>{latest=d.rates;setCards();updatePL();});
-function setCards(){
-  const map=[['EURUSD','EUR',true],['USDJPY','JPY',false],['GBPUSD','GBP',true]];
-  map.forEach(([code,quote,inv])=>{
-    const price=inv?1/latest[quote]:latest[quote];
-    document.querySelector(`[data-pair="${code}"] .price`).textContent=price.toFixed(4);
-  });
-
-/* --- SMA & RSI (same as before) --- */
-(async()=>{
-  const end=new Date().toISOString().slice(0,10),start=new Date(Date.now()-32*864e5).toISOString().slice(0,10);
-  const meta=[{pair:'EURUSD',q:'EUR',inv:true},{pair:'USDJPY',q:'JPY'},{pair:'GBPUSD',q:'GBP',inv:true}];
-  for(const m of meta){
-    const url=`https://api.exchangerate.host/timeseries?start_date=${start}&end_date=${end}&base=USD&symbols=${m.q}`;
-    const js=await fetch(url).then(r=>r.json()).catch(()=>null);if(!js)continue;
-    const closes=Object.values(js.rates).map(v=>m.inv?1/v[m.q]:v[m.q]);
-    const sma=closes.slice(-20).reduce((a,b)=>a+b,0)/20;
-    let g=0,l=0;for(let i=closes.length-15;i<closes.length-1;i++){const d=closes[i+1]-closes[i];d>0?g+=d:l-=d;}
-    const rsi=100-100/(1+g/(l||.0001));
-    const card=document.querySelector(`[data-pair="${m.pair}"]`);
-    card.querySelector('.sma span').textContent=sma.toFixed(4);
-    card.querySelector('.rsi span').textContent=rsi.toFixed(1);
-  }
-})();
-  /* ---------- 3. GLOBAL DATA STORES ------------- */
+/* ---------- 3. GLOBAL DATA STORES ------------- */
 const latest   = {};   // most recent snapshot
 const metrics  = {};   // { 'EUR/USD':{price,sma,rsi} ... }
 const ohlcMap  = {};   // { 'EUR/USD':[ {t,o,h,l,c}, ... ] }
@@ -341,7 +322,6 @@ setInterval(async()=>{
   setRateCard('GBPUSD','GBP',true);
   updatePL();
 },60000);
-  
 </script>
 </body>
 </html>
