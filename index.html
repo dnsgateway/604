@@ -172,7 +172,6 @@ function setCards(){
     const price=inv?1/latest[quote]:latest[quote];
     document.querySelector(`[data-pair="${code}"] .price`).textContent=price.toFixed(4);
   });
-}
 
 /* --- SMA & RSI (same as before) --- */
 (async()=>{
