@@ -234,3 +234,11 @@ body.blurred::after{
 .bottom-bar button.active i{stroke:var(--bg)}
 .bottom-bar i{width:24px;height:24px}
 @media(max-width:767px){.bottom-bar{display:flex}}
+/* 2-col overrides in form */
+.port-form{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.8rem}
+
+/* make small inputs align */
+.port-form input[type="number"]{text-align:right}
+
+/* grow card to show new data */
+.port-card .prob{font-size:.78rem;color:var(--sub);margin-top:.3rem}
