@@ -235,13 +235,19 @@ body.blurred::after{
 .bottom-bar i{width:24px;height:24px}
 @media(max-width:767px){.bottom-bar{display:flex}}
 /* ——— Portfolio form tweaks ——— */
+/* ——— updated form layout ——— */
 .port-form{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-  gap:.9rem
+  gap:1rem;
+  grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
 }
-.port-form input[type="number"]{text-align:right}
+.port-form input[type="number"],
+.port-form select{
+  text-align:right;
+}
 
+/* optional: give the Current-Price line in each card a hint-color */
+.port-card .current{color:var(--sub)}
 /* ——— Trade-Plan popup ——— */
 .modal{
   position:fixed;inset:0;display:grid;place-items:center;
