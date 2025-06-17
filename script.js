@@ -26,7 +26,8 @@ const metrics = {};   // price, sma, rsi, atr
 const PAIRS = [
   {key:'EUR/USD', tv:'FX:EURUSD', quote:'EUR', inv:true },
   {key:'USD/JPY', tv:'FX:USDJPY', quote:'JPY', inv:false},
-  {key:'GBP/USD', tv:'FX:GBPUSD', quote:'GBP', inv:true }
+  {key:'GBP/USD', tv:'FX:GBPUSD', quote:'GBP', inv:true },
+  { key:'AUD/USD', tv:'FX:AUDUSD', quote:'AUD', inv:true }
 ];
 (async function init(){
   await Promise.all(PAIRS.map(loadPair));
