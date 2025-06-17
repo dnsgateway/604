@@ -100,48 +100,61 @@
       </div>
     </section>
 
-    <!-- 3️⃣  PORTFOLIO SIMULATOR (extended) -->
-<section id="portfolio" class="page port-sim">
-  <div class="port-header">
-    <h2>Forex Portfolio Simulator</h2>
-    <label class="toggle">
-      <input type="checkbox" id="aiPortToggle"><span class="slider"></span>
-      <span class="label-text">AI Assist</span>
-    </label>
+    <!-- █ 3️⃣  PORTFOLIO SIMULATOR (form extended) █ -->
+  <section id="portfolio" class="page port-sim">
+    <div class="port-header">
+      <h2>Forex Portfolio Simulator</h2>
+      <label class="toggle">
+        <input type="checkbox" id="aiPortToggle"/>
+        <span class="slider"></span><span class="label-text">AI Assist</span>
+      </label>
+    </div>
+    <p class="subline">Select pair, (opt) override RSI / SMA or Exit.</p>
+
+    <form id="portForm" class="port-form">
+      <label>Pair
+        <select id="pPair">
+          <option>EUR/USD</option><option>USD/JPY</option>
+          <option>GBP/USD</option><option>AUD/USD</option>
+        </select>
+      </label>
+      <label>Dir
+        <select id="pDir"><option>Buy</option><option>Sell</option></select>
+      </label>
+      <label>Units   <input type="number" id="pUnits" placeholder="25 000" required></label>
+      <label>Entry   <input type="number" id="pEntry" step="0.0001" required></label>
+      <label>RSI     <input type="number" id="pRSI"  step="0.1"     placeholder="auto"></label>
+      <label>SMA     <input type="number" id="pSMA"  step="0.0001"  placeholder="auto"></label>
+      <label>Exit    <input type="number" id="pExit" step="0.0001"  placeholder="optional"></label>
+      <button type="submit">Add</button>
+    </form>
+
+    <div id="portGrid" class="port-grid"></div>
+  </section>
+</div>
+
+<!-- ░░ AI-Trade-Plan Modal ░░ -->
+<div id="planModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="planTitle">
+  <div class="modal-inner" tabindex="-1">
+    <h3 id="planTitle">AI Trade Plan</h3>
+    <ul class="plan-list">
+      <li>Pair:          <span id="plPair"></span></li>
+      <li>Entry:         <span id="plEntry"></span></li>
+      <li>Stop Loss:     <span id="plStop"></span></li>
+      <li>Target:        <span id="plTgt"></span></li>
+      <li>RSI:           <span id="plRSI"></span></li>
+      <li>SMA-20:        <span id="plSMA"></span></li>
+      <li>Risk/Reward:   <span id="plRR"></span></li>
+      <li>Confidence:    <span id="plConf"></span></li>
+    </ul>
+    <p id="plNote" class="plan-note"></p>
+
+    <div class="modal-actions">
+      <button id="planAddBtn"  class="btn-primary">Add to Portfolio</button>
+      <button id="planCloseBtn" class="btn-secondary">Dismiss</button>
+    </div>
   </div>
-  <p class="subline">Select pair(s), add optional RSI / SMA overrides and target.</p>
-
-  <!-- multi-pair form -->
-  <form id="portForm" class="port-form">
-    <label>Pair
-      <select id="pPair">
-        <option>EUR/USD</option><option>USD/JPY</option>
-        <option>GBP/USD</option><option>AUD/USD</option>
-      </select>
-    </label>
-    <label>Dir
-      <select id="pDir"><option>Buy</option><option>Sell</option></select>
-    </label>
-    <label>Units
-      <input type="number" id="pUnits" placeholder="25 000" required>
-    </label>
-    <label>Entry
-      <input type="number" id="pEntry" step="0.0001" required>
-    </label>
-    <label>RSI (override)
-      <input type="number" id="pRSI" step="0.1" placeholder="auto">
-    </label>
-    <label>SMA (override)
-      <input type="number" id="pSMA" step="0.0001" placeholder="auto">
-    </label>
-    <label>Exit (target)
-      <input type="number" id="pExit" step="0.0001" placeholder="optional">
-    </label>
-    <button type="submit">Add</button>
-  </form>
-
-  <div id="portGrid" class="port-grid"></div>
-</section>
+</div>
 
     <!-- 🟢 4. SETTINGS -->
     <section id="settings" class="page settings">
